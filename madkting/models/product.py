@@ -33,8 +33,8 @@ class ProductProduct(models.Model):
     webhook_data = fields.Text('Webhook data', default='')
     webhook_last_update = fields.Char('Fecha ultimo webhook', default='')
 
-    _sql_constraints = [('id_product_madkting_uniq', 'unique (id_product_madkting,active)',
-                         'The relationship between products of madkting and odoo must be one to one!')]
+    # _sql_constraints = [('id_product_madkting_uniq', 'unique (id_product_madkting,active)',
+    #                      'The relationship between products of madkting and odoo must be one to one!')]
 
     __update_product_fields = {'name': str,
                                'default_code': str,

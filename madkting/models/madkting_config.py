@@ -60,7 +60,7 @@ class MadktingConfig(models.Model):
 
     invoice_webhook_enabled = fields.Boolean(string="Enviar webhook de facturas")
     auto_webhook_after_invoice_enabled = fields.Boolean(string="Enviar webhook automaticamente despues de facturar", default=False)
-    invoice_prefix_id_folio = fields.Boolean(string="Agrega prefijo Id de factura en folio", defaul=False)
+    invoice_prefix_id_folio = fields.Boolean(string="Agrega prefijo Id de factura en folio", default=False)
     invoice_separator = fields.Char(string="Separador Serie y Folio", help='Indica el separador para acotar la serie y el folio de la factura')
     invoice_serie = fields.Char(string="Serie de la factura", help='Si esta definida, se utiliza como serie por default para la factura')
     invoice_serie_ticket = fields.Char(string="Serie de la boleta", help='Si esta definida, se utiliza como serie por default para la factura')

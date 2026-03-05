@@ -17,9 +17,9 @@ class YujuMapping(models.Model):
     company_id = fields.Many2one('res.company', 'Company')
     id_shop_yuju = fields.Char('Id Shop Yuju', size=50)
 
-    _sql_constraints = [
-        ('mapping_yuju_unique', 'unique(id_shop_yuju, company_id)', 'El mappeo ya existe')
-    ]
+    # _sql_constraints = [
+    #     ('mapping_yuju_unique', 'unique(id_shop_yuju, company_id)', 'El mappeo ya existe')
+    # ]
 
     def get_mapping(self, company_id):
         mapping_ids = self.search_count([('company_id', '=', company_id)])
