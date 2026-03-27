@@ -16,7 +16,7 @@
     'email': "gerardo.lopez@yuju.io",
     'website': "https://yuju.io/",
     'category': 'Sales',
-    'version': '19.0.0.2',
+    'version': '19.0.0.3',
     'license': 'Other proprietary',
 
     # any module necessary for this one to work correctly
@@ -59,3 +59,4 @@
 }
 
 # 19.0.0.2 - Actualiza flujo de webhooks
+# 19.0.0.3 - Quita campo vista
