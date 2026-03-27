@@ -219,15 +219,25 @@ class MadktingWebhook(models.Model):
                 location_ids=location_ids,
                 company_id=company_id
             )
-
+            product_id = None
             batchsize = config.webhook_product_batchsize if config.webhook_product_batchsize > 0 else 20
             
             wh_records = self.env["yuju.webhook.record"]
             for product_data in self.env['product.product'].split_into_chunks(stock_data, batchsize):
                 # product_data = self.process_webhook_chunk(product_ids=prod_ids, config=config, company_id=company_id, location_ids=location_ids)
                 auto_send = config.webhook_auto_send_enabled
-                wh_records.prepare_webhook_cron(webhook_body=product_data, company_id=company_id, type_webhook='stock', auto_send=auto_send)
             
+                if batchsize == 1 and len(product_data) == 1:
+                    product_id = product_data[0].get("product_id")
+
+                wh_records.prepare_webhook_cron(
+                    webhook_body=product_data, 
+                    company_id=company_id, 
+                    type_webhook='stock', 
+                    auto_send=auto_send,
+                    product_id=product_id
+                    )
+
             # for product in product_ids:                
             #     wh_records.prepare_webhook(product, company_id, rec.id_shop)
 

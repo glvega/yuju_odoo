@@ -16,7 +16,7 @@
     'email': "gerardo.lopez@yuju.io",
     'website': "https://yuju.io/",
     'category': 'Sales',
-    'version': '19.0.0.1',
+    'version': '19.0.0.2',
     'license': 'Other proprietary',
 
     # any module necessary for this one to work correctly
@@ -57,3 +57,5 @@
         "views/**/*",  # exclude all files in a folder hierarchy recursively
     ]
 }
+
+# 19.0.0.2 - Actualiza flujo de webhooks

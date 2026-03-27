@@ -52,11 +52,11 @@ class StockPicking(models.Model):
         record_state = getattr(self, 'state', None)
         if record_state in ['assigned', 'done', 'cancel']:
 
-            if config.webhook_stock_cron_enabled:
-                if not self.product_id.webhook_pending:
-                    _logger.info("Update product webhook pending")
-                    self.product_id.webhook_pending = True
-            else:
-                _logger.info("Webhook stock cron not enabled")
-                auto_send = config.webhook_auto_send_enabled
-                self.product_id.send_webhook_action(auto_send=auto_send, config=config)
+            # if config.webhook_stock_cron_enabled:
+            #     if not self.product_id.webhook_pending:
+            #         _logger.info("Update product webhook pending")
+            #         self.product_id.webhook_pending = True
+            # else:
+            _logger.info("Webhook stock cron not enabled")
+            auto_send = config.webhook_auto_send_enabled
+            self.product_id.send_webhook_action(auto_send=auto_send, config=config)

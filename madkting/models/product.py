@@ -383,23 +383,59 @@ class ProductProduct(models.Model):
             if config.webhook_auto_send_enabled:
                 logger.debug(f"Auto send enabled, skipping scheduled send {config.company_id.id}")
                 continue
-            webhook_limit = 10
-            if config.webhook_product_limit:
-                webhook_limit = config.webhook_product_limit
-                logger.debug(f"Using webhook limit from config: {webhook_limit}")
+            
+            # webhook_limit = 10
+            # if config.webhook_product_limit:
+            #     webhook_limit = config.webhook_product_limit
+            #     logger.debug(f"Using webhook limit from config: {webhook_limit}")
+            
+            batchsize = 10
+            if config.webhook_product_batchsize:
+                batchsize = config.webhook_product_batchsize
+                logger.debug(f"Using webhook batchsize from config: {batchsize}")
+            
             logger.debug("## SCHEDULE SEND WEBHOOKS ##")
             wh_records = self.env["yuju.webhook.record"]
             wh_ids = wh_records.search([
-                ('event', '=', 'stock_update'), 
-                # ('product_id', '=', False), 
+                ('event', '=', 'stock_update'),
+                ('product_id', '=', False),
                 ('state', '=', 'draft'),
                 ('company_id', '=', config.company_id.id)
-            ], limit=webhook_limit, order="date_webhook asc")
+            ], limit=1, order="date_webhook asc")
+            
+            if not wh_ids:
+                logger.debug("No hay webhooks pendientes de envio, se buscan con product_id != False")            
+                wh_ids = wh_records.search([
+                    ('event', '=', 'stock_update'),
+                    ('product_id', '!=', False),
+                    ('state', '=', 'draft'),
+                    ('company_id', '=', config.company_id.id)
+                ], limit=batchsize, order="date_webhook asc")
             
             if wh_ids.ids:             
                 logger.debug(f"## SEND WEBHOOKS: {wh_ids.ids} ##")
+                grouped_webhook = []
                 for wh in wh_ids:
-                    wh.send_webhook()
+                    if wh.product_id and wh.data:
+                        wh_data = json.loads(wh.data)
+                        if isinstance(wh_data, list) and len(wh_data) == 1:
+                            grouped_webhook.append(wh_data[0])
+                            wh.state = 'done'
+                            wh.date_send_webhook = fields.Datetime.now()
+                    else:
+                        logger.debug("Sending webhook without product_id or data")
+                        wh.send_webhook()
+
+                if grouped_webhook:
+                    logger.debug(f"Preparing webhook with {len(grouped_webhook)} items")
+                    for chunk in self.split_into_chunks(grouped_webhook, batchsize):
+                        wh_records.prepare_webhook_cron(
+                            webhook_body=chunk, 
+                            company_id=config.company_id.id, 
+                            type_webhook='stock', 
+                            auto_send=True, 
+                            product_id=False)
+
         return True
 
     def show_qty(self):
