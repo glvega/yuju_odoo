@@ -16,7 +16,7 @@
     'email': "gerardo.lopez@yuju.io",
     'website': "https://yuju.io/",
     'category': 'Sales',
-    'version': '19.0.0.3',
+    'version': '19.0.0.8',
     'license': 'Other proprietary',
 
     # any module necessary for this one to work correctly
@@ -60,3 +60,8 @@
 
 # 19.0.0.2 - Actualiza flujo de webhooks
 # 19.0.0.3 - Quita campo vista
+# 19.0.0.4 - Actualiza metodo obtner datos producto y variacion
+# 19.0.0.5 - Actualiza ref en security privilege
+# 19.0.0.6 - Fix Warnings
+# 19.0.0.7 - Agrega valores por default en config
+# 19.0.0.8 - Actualiza formato respuestas, Fix en deliver order

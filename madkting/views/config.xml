@@ -36,7 +36,7 @@
                   <field name="webhook_stock_enabled"/>
                   <!-- <field name="webhook_auto_send_enabled"/> -->
                   <!-- <field name="webhook_product_mapped" /> -->
-                  <field name="webhook_stock_cron_enabled"/>
+                  <!-- <field name="webhook_stock_cron_enabled"/> -->
                   <field name="webhook_product_batchsize"/>
                   <!-- <field name="webhook_product_limit"/> -->
                   <field name="stock_source_multi"/>

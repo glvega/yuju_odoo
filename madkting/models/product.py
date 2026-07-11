@@ -228,65 +228,65 @@ class ProductProduct(models.Model):
         locations = self.env["stock.location"].browse(location_ids)
         return locations.ids
 
-    def process_webhooks(self):
-        logger.info("## PREPARE WEBHOOKS ##")
-        config_ids = self.env['madkting.config'].with_context(
-                prefetch_fields=[
-                    'company_id',
-                    'stock_source_multi',
-                    'webhook_stock_enabled',
-                    'webhook_stock_cron_enabled',
-                    'webhook_product_mapped',
-                    'webhook_product_batchsize',
-                    'webhook_auto_send_enabled'
-                ]).search([])
+    # def process_webhooks(self):
+    #     logger.info("## PREPARE WEBHOOKS ##")
+    #     config_ids = self.env['madkting.config'].with_context(
+    #             prefetch_fields=[
+    #                 'company_id',
+    #                 'stock_source_multi',
+    #                 'webhook_stock_enabled',
+    #                 'webhook_stock_cron_enabled',
+    #                 'webhook_product_mapped',
+    #                 'webhook_product_batchsize',
+    #                 'webhook_auto_send_enabled'
+    #             ]).search([])
         
-        batchsize = 20
-        product_data = []
-        processed_webhooks = False
-        for config in config_ids:
+    #     batchsize = 20
+    #     product_data = []
+    #     processed_webhooks = False
+    #     for config in config_ids:
 
-            if not config.stock_source_multi or not config.webhook_stock_enabled or not config.webhook_stock_cron_enabled:
-                logger.debug("Webhook stock cron not enabled in config")
-                continue
+    #         if not config.stock_source_multi or not config.webhook_stock_enabled or not config.webhook_stock_cron_enabled:
+    #             logger.debug("Webhook stock cron not enabled in config")
+    #             continue
 
-            domain = [('webhook_pending', '=', True)]
-            if config.webhook_product_mapped:
-                domain.append(('id_product_madkting', '!=', False))
+    #         domain = [('webhook_pending', '=', True)]
+    #         if config.webhook_product_mapped:
+    #             domain.append(('id_product_madkting', '!=', False))
             
-            product_ids = self.with_context(
-                prefetch_fields=[
-                    'default_code', 
-                    'id_product_madkting'
-                ]).search(domain)
+    #         product_ids = self.with_context(
+    #             prefetch_fields=[
+    #                 'default_code', 
+    #                 'id_product_madkting'
+    #             ]).search(domain)
 
-            if not product_ids:
-                logger.info("No hay productos pendientes de webhook")
-                return results.success_result([])
+    #         if not product_ids:
+    #             logger.info("No hay productos pendientes de webhook")
+    #             return results.success_result([])
 
-            processed_webhooks = True
+    #         processed_webhooks = True
 
-            company_id = config.company_id.id
-            if config.webhook_product_batchsize:
-                batchsize = config.webhook_product_batchsize
+    #         company_id = config.company_id.id
+    #         if config.webhook_product_batchsize:
+    #             batchsize = config.webhook_product_batchsize
 
-            location_ids = self._get_location_ids(config)
-            stock_data = self.get_stock_products(
-                products=product_ids,
-                location_ids=location_ids,
-                company_id=company_id
-            )
+    #         location_ids = self._get_location_ids(config)
+    #         stock_data = self.get_stock_products(
+    #             products=product_ids,
+    #             location_ids=location_ids,
+    #             company_id=company_id
+    #         )
 
-            wh_records = self.env["yuju.webhook.record"]
-            for product_data in self.split_into_chunks(stock_data, batchsize):
-                # product_data = self.process_webhook_chunk(product_ids=prod_ids, config=config, company_id=company_id, location_ids=location_ids)
-                auto_send = config.webhook_auto_send_enabled
-                wh_records.prepare_webhook_cron(webhook_body=product_data, company_id=company_id, type_webhook='stock', auto_send=auto_send)
+    #         wh_records = self.env["yuju.webhook.record"]
+    #         for product_data in self.split_into_chunks(stock_data, batchsize):
+    #             # product_data = self.process_webhook_chunk(product_ids=prod_ids, config=config, company_id=company_id, location_ids=location_ids)
+    #             auto_send = config.webhook_auto_send_enabled
+    #             wh_records.prepare_webhook_cron(webhook_body=product_data, company_id=company_id, type_webhook='stock', auto_send=auto_send)
 
-        if processed_webhooks:
-            product_ids.write({'webhook_pending': False, "webhook_last_update": fields.Datetime.now().strftime('%Y-%m-%d %H:%M:%S')})    
+    #     if processed_webhooks:
+    #         product_ids.write({'webhook_pending': False, "webhook_last_update": fields.Datetime.now().strftime('%Y-%m-%d %H:%M:%S')})    
         
-        return results.success_result(product_data)
+    #     return results.success_result(product_data)
     
     def write(self, values):
         # Check if we need to update price for products
@@ -1164,8 +1164,10 @@ class ProductProduct(models.Model):
         :return:
         """
         self.ensure_one()
-        data = self.copy_data()[0]
+        data = dict()
         data['id'] = self.id
+        data['name'] = self.name
+        data['default_code'] = self.default_code
         data['product_id'] = self.product_variant_id.id
         data['template_id'] = self.product_tmpl_id.id
         data['standard_price'] = self.standard_price
@@ -1181,11 +1183,12 @@ class ProductProduct(models.Model):
         :return:
         """
         self.ensure_one()
-        data = self.product_tmpl_id.copy_data()[0]
+        data = dict()
         data['variations'] = list()
         variation_attributes = defaultdict(list)
         data['template_id'] = self.product_tmpl_id.id
         data['id'] = self.id
+        data['name'] = self.name
         data['default_code'] = self.default_code
         data['product_variant_count'] = self.product_tmpl_id.product_variant_count
         for variation in self.product_variant_ids:
@@ -1195,6 +1198,7 @@ class ProductProduct(models.Model):
                     variation_attributes[attribute].append(value)
             data['variations'].append(variation_data)
         data['variation_attributes'] = dict(variation_attributes)
+        _logger.info(data)
         return data
 
     def __validate_update_fields(self, fields, product_type):

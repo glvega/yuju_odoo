@@ -19,11 +19,15 @@ class MadktingWebhook(models.Model):
 
     __allowed_hook_types = ['stock', 'price']
 
+    def _get_default_company_id(self):
+        company_id = self.env.user.company_id
+        return company_id.id
+
     hook_type = fields.Selection([('stock', 'Stock'), ('price', 'Price')], string='Webhook type', required=True, default='stock')
     url = fields.Char('Webhook endpoint', default="product_update", size=400, required=False)
     id_shop = fields.Char('Id Shop Yuju', required=True, default="0")
     active = fields.Boolean('Active', default=True, required=True)
-    company_id = fields.Many2one('res.company', string='Empresa', required=True)
+    company_id = fields.Many2one('res.company', string='Empresa', required=True, default=_get_default_company_id)
     message = fields.Text('Mensaje')
     updated_at = fields.Datetime(string="Updated at", readonly=True)
 

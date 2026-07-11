@@ -17,12 +17,50 @@ class MadktingConfig(models.Model):
     _name = 'madkting.config'
     _description = 'Config'
 
-    company_id = fields.Many2one('res.company', string='Company', required=True)
-    dbname = fields.Char(string='Dbname', required=True, default="NA")
+    def _get_default_company_id(self):
+        company_id = self.env.user.company_id
+        return company_id.id
+    
+    def _get_default_dbname(self):
+        db_name = self.env.cr.dbname
+        return db_name
+    
+    def _get_default_country(self):
+        country = self.env.company.country_id
+        country_code = country.code
+        if country_code:
+            if country_code == "UY":
+                return "URY"
+            elif country_code == "CL":
+                return "CHL"
+            elif country_code == "CO":
+                return "COL"
+            elif country_code == "MX":
+                return "MXN"
+            return country_code
+        return
+    
+    def _get_default_currency(self):
+        country = self.env.company.country_id
+        country_code = country.code
+        if country_code:
+            if country_code == "UY":
+                return "UYU"
+            elif country_code == "CL":
+                return "CLP"
+            elif country_code == "CO":
+                return "COP"
+            elif country_code == "MX":
+                return "MXN"
+        return ""
+
+    company_id = fields.Many2one('res.company', string='Company', required=True, default=_get_default_company_id)
+    dbname = fields.Char(string='Dbname', required=True, default=_get_default_dbname)
     stock_quant_available_quantity_enabled = fields.Boolean('Mostrar cantidad disponible', default=True)
     # stock_source = fields.Many2one('stock.location', string="Ubicacion de Stock", domain=[('usage', '=', 'internal')])
     stock_source_multi = fields.Char('Multi Stock Src')
     simple_stock_locations = fields.Boolean('Obtiene stock desde campos calculados', 
+                                            default=True,
                                             help="Si no se activa, debe especificar las ubicaciones exactas donde se almacena el stock, se recomienda en configuraciones complejas con varios niveles de ubicaciones")
     stock_source_channels = fields.Char('Channels Stock Src')
     stock_locations_children = fields.Boolean('Buscar stock en ubicaciones hijas', default=False, help='Si esta habilitado, se toman en cuenta las ubicaciones hijas de la ubicacion de stock, se usa con webhooks agrupados')
@@ -58,24 +96,24 @@ class MadktingConfig(models.Model):
     required_invoice_address_fields = fields.Text('Campos requeridos factura')
     invoice_doctype_enabled = fields.Boolean('Mapea doctype en factura')
 
-    invoice_webhook_enabled = fields.Boolean(string="Enviar webhook de facturas")
+    invoice_webhook_enabled = fields.Boolean(string="Enviar webhook de facturas", default=True)
     auto_webhook_after_invoice_enabled = fields.Boolean(string="Enviar webhook automaticamente despues de facturar", default=False)
     invoice_prefix_id_folio = fields.Boolean(string="Agrega prefijo Id de factura en folio", default=False)
     invoice_separator = fields.Char(string="Separador Serie y Folio", help='Indica el separador para acotar la serie y el folio de la factura')
-    invoice_serie = fields.Char(string="Serie de la factura", help='Si esta definida, se utiliza como serie por default para la factura')
-    invoice_serie_ticket = fields.Char(string="Serie de la boleta", help='Si esta definida, se utiliza como serie por default para la factura')
+    invoice_serie = fields.Char(string="Serie de la factura", default="A", help='Si esta definida, se utiliza como serie por default para la factura')
+    invoice_serie_ticket = fields.Char(string="Serie de la boleta", default="B", help='Si esta definida, se utiliza como serie por default para la factura')
     invoice_doc_type = fields.Selection([('ticket', "Nota/Boleta"), ("invoice", "Factura")], default="ticket", string="Tipo de documento facturacion")
     invoice_validate_attached_formats = fields.Boolean(string="Valida formato de archivos adjuntos", default=False, help="Si se habilita, se valida que todos los formatos necesarios esten adjuntos antes de enviar la factura")
     
-    invoice_partner_vat = fields.Char(string="RFC Cliente de las facturas", help='Si esta definido, se utiliza como VAT/RFC/TAXID por default para la factura')
-    invoice_prefix_file = fields.Char(string="Prefijo del archivo", help='Se utiliza para identificar el archivo que va a procesarse por el modulo')
+    invoice_partner_vat = fields.Char(string="RFC Cliente de las facturas", default="66666666-6", help='Si esta definido, se utiliza como VAT/RFC/TAXID por default para la factura')
+    invoice_prefix_file = fields.Char(string="Prefijo del archivo", default="SII", help='Se utiliza para identificar el archivo que va a procesarse por el modulo')
     invoice_prefix_pdf_file = fields.Char(string="Prefijo del archivo PDF", help='Se utiliza para identificar el archivo que va a procesarse por el modulo')
     
-    invoice_add_pdf_file = fields.Boolean(string="Adjuntar archivo PDF", help='Se utiliza para adjuntar archivo PDF si existe.')
-    invoice_print_pdf_file = fields.Boolean(string="Generar archivo PDF", help='Ejecuta la accion print_invoice')
+    invoice_add_pdf_file = fields.Boolean(string="Adjuntar archivo PDF", default=True, help='Se utiliza para adjuntar archivo PDF si existe.')
+    invoice_print_pdf_file = fields.Boolean(string="Generar archivo PDF", default=True, help='Ejecuta la accion print_invoice')
     invoice_save_pdf_attachment = fields.Boolean(string="Guardar Adjunto PDF", help='Se utiliza para guardar el archivo PDF Generado.')
-    invoice_country = fields.Char(string="Codigo de Pais", help='Pais donde se esta emitiendo la factura (ISO 3166-1 alpha-3)')
-    invoice_currency = fields.Char(string="Codigo de Moneda", help='Moneda utilizada para facturar (ISO 4227)')
+    invoice_country = fields.Char(string="Codigo de Pais", default=_get_default_country, help='Pais donde se esta emitiendo la factura (ISO 3166-1 alpha-3)')
+    invoice_currency = fields.Char(string="Codigo de Moneda", default=_get_default_currency, help='Moneda utilizada para facturar (ISO 4227)')
 
     invoice_auto_retry = fields.Boolean(string="Reintento automatico", default=False, help='Si se habilita, se intenta reenviar las facturas automaticamente')
     invoice_max_retries = fields.Integer(string="Maximo reintentos", default=5, help='Numero maximo de reintentos para enviar la factura')
@@ -94,7 +132,7 @@ class MadktingConfig(models.Model):
     dropship_mto_route_id = fields.Many2one('stock.route', string='Ruta para MTO')
     dropship_picking_type = fields.Many2one('stock.picking.type', string='Dropship Picking Type')
 
-    validate_partner_exists = fields.Boolean('Buscar Partner', help="Valida si existe el partner en odoo antes de crearlo")
+    validate_partner_exists = fields.Boolean('Buscar Partner', default=True, help="Valida si existe el partner en odoo antes de crearlo")
     partner_name_invoice_address = fields.Boolean('Actualizar nombre del cliente con direccion de factura', help="Se modifica el nombre del cliente con el nombre que llega en la direccion de factura")
     product_shared_catalog_enabled = fields.Boolean("Catalogo de productos compartido", default=False)
     service_url = fields.Char(string="Url servicio", default="https://internal.yuju.io/odoo", required=True)

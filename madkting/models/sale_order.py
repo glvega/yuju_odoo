@@ -49,7 +49,7 @@ class SaleOrder(models.Model):
     payment_id = fields.Integer('Pago Id')
     yuju_order_data = fields.Text('Datos de la orden')
 
-    yuju_payment_method = fields.Char('Payment Method')
+    yuju_payment_method = fields.Char('Yuju Payment Method')
     yuju_shipping_type = fields.Char('Shipping Type')
     yuju_error = fields.Char('Error Yuju')
 
@@ -74,7 +74,7 @@ class SaleOrder(models.Model):
     def init(self):
         # Índice para búsquedas frecuentes por channel_id y channel_order_id
         # self._cr.execute("DROP INDEX IF EXISTS idx_sale_channel_order_index;")
-        self._cr.execute("""
+        self.env.cr.execute("""
             CREATE INDEX IF NOT EXISTS idx_sale_channel_order_index
             ON sale_order (channel_id, channel_order_id)
             WHERE channel_id IS NOT NULL AND channel_order_id IS NOT NULL;
@@ -462,6 +462,38 @@ class SaleOrder(models.Model):
         :rtype: dict
         """
         self.ensure_one()
+        extra_order_fields = [
+            # 'partner_invoice_id', 'partner_shipping_id'
+        ]
+        order_data = {
+            "id": self.id,
+            "name": self.name,
+            "partner_id": self.partner_id.id,
+            # "partner_invoice_id": self.partner_invoice_id.id,
+            # "partner_shipping_id": self.partner_shipping_id.id
+        }
+
+        partner_invoice = getattr(self, "partner_invoice_id", False)
+        if partner_invoice:
+            order_data.update({"partner_invoice_id": partner_invoice.id})
+
+        partner_shipping = getattr(self, "partner_shipping_id", False)
+        if partner_shipping:
+            order_data.update({"partner_shipping_id": partner_shipping.id})
+
+        for field in extra_order_fields:
+            order_data[field] = getattr(self, field, False)
+
+        logger.info("## ORDER YUJU DATA ##")
+        logger.info(order_data)
+        return order_data
+    
+    def __yuju_get_data(self):
+        """
+        :return: dictionary with sale order data
+        :rtype: dict
+        """
+        self.ensure_one()
         data = self.copy_data()[0]
         data['lines'] = list()
         extra_fields = ['id', 'name', 'state', 'amount_total', 'amount_tax',
@@ -703,8 +735,8 @@ class SaleOrder(models.Model):
                     current_delivery = picking
                     current_id = current_delivery.id
                     current_name = current_delivery.name
-                    current_data = current_delivery.copy_data()[0]
-
+                    # current_data = current_delivery.copy_data()[0]
+                    current_data = {}
                     current_data['id'] = current_id
                     current_data['name'] = current_name
                     current_data['state'] = current_delivery.state
@@ -723,7 +755,7 @@ class SaleOrder(models.Model):
                     logger.debug("## Next picking ##")
                     continue  
                 if picking.state == "done":
-                    for line in picking.move_ids_without_package.sudo():
+                    for line in picking.move_ids.sudo():
                         product_sku = line.product_id.default_code
                         product_qty_done = line.quantity
                         if product_sku not in actual_delivered:
@@ -794,7 +826,7 @@ class SaleOrder(models.Model):
             if current_delivery.state == 'assigned':
                 logger.debug('assigned')
                 try:
-                    for line in current_delivery.move_ids_without_package.sudo():
+                    for line in current_delivery.move_ids.sudo():
                         product_sku = line.product_id.default_code
                         if deliver_detail:
                             to_deliver = deliver_detail.get(product_sku, 0)
@@ -842,7 +874,7 @@ class SaleOrder(models.Model):
 
         current_id = current_delivery.id
         current_name = current_delivery.name
-        current_data = current_delivery.copy_data()[0]
+        current_data = dict()
 
         current_data['id'] = current_id
         current_data['name'] = current_name
@@ -933,14 +965,18 @@ class SaleOrder(models.Model):
                                                             description='The sale order cannot be supplier invoiced because of '
                                                                         'the following exception: {}'.format(ex))
                             else:
-                                invoice_data = supplier_invoice.copy_data()[0]
+                                # invoice_data = supplier_invoice.copy_data()[0]
+                                invoice_data = {}
                                 invoice_data['id'] = supplier_invoice.id
                                 invoice_data['name'] = supplier_invoice.name
                                 return results.success_result(data=invoice_data)
                     else:
                         logger.debug('Invoice exists')
                         logger.debug(invoice_exists)
-                        invoice_data = invoice_exists.copy_data()[0]
+                        # invoice_data = invoice_exists.copy_data()[0]
+                        invoice_data = {}
+                        invoice_data['id'] = invoice_exists[0].id
+                        invoice_data['name'] = invoice_exists[0].name
                         return results.success_result(data=invoice_data)
 
         return results.error_result(code='invoice_create_error',
@@ -1011,7 +1047,8 @@ class SaleOrder(models.Model):
                 if invoice.state != 'cancel':
                     if invoice.state not in ['posted', 'paid', 'ready']:                    
                         invoice.action_post()
-                    invoice_data = invoice.copy_data()[0]
+                    # invoice_data = invoice.copy_data()[0]
+                    invoice_data = {}
                     invoice_data['id'] = invoice.id
                     invoice_data['name'] = invoice.name
                     invoice_data['state'] = invoice.state
@@ -1070,7 +1107,8 @@ class SaleOrder(models.Model):
                                     description='The sale order invoice cannot be confirmed because of '
                                                 'the following exception: {}'.format(e))
 
-            invoice_data = invoice.copy_data()[0]
+            # invoice_data = invoice.copy_data()[0]
+            invoice_data = {}
             invoice_data['id'] = invoice.id
             invoice_data['name'] = invoice.name
             invoice_data['state'] = invoice.state

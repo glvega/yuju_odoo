@@ -14,7 +14,7 @@ class ResPartner(models.Model):
     def init(self):
         # Índice para búsquedas frecuentes por cliente y fecha
         # self._cr.execute("DROP INDEX IF EXISTS idx_partner_vat_type_index;")
-        self._cr.execute("""
+        self.env.cr.execute("""
             CREATE INDEX IF NOT EXISTS idx_partner_vat_type_index
             ON res_partner (type, vat)
             WHERE type in ('contact', 'invoice');
@@ -310,7 +310,7 @@ class ResPartner(models.Model):
         city_name = city_name.strip()
         try:
             city = self.env['res.city'].search([
-                ('name', '=', city_name), 
+                ('name', '=ilike', city_name), 
                 ('state_id', '=', state_id), 
                 ('country_id', '=', country_id)
                 ], limit=1)
