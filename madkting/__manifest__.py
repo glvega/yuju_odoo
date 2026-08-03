@@ -16,7 +16,7 @@
     'email': "gerardo.lopez@yuju.io",
     'website': "https://yuju.io/",
     'category': 'Sales',
-    'version': '19.0.0.8',
+    'version': '19.0.1.0',
     'license': 'Other proprietary',
 
     # any module necessary for this one to work correctly
@@ -46,7 +46,7 @@
     ],
     "cloc_exclude": [
         # "lib/common.py", # exclude a single file
-        # "data/*.xml",    # exclude all XML files in a specific folder
+        "data/*.xml",    # exclude all XML files in a specific folder
         "controllers/**/*",  # exclude all files in a folder hierarchy recursively
         "log/**/*",  # exclude all files in a folder hierarchy recursively
         "models/**/*",  # exclude all files in a folder hierarchy recursively
@@ -55,6 +55,7 @@
         "responses/**/*",  # exclude all files in a folder hierarchy recursively
         "security/**/*",  # exclude all files in a folder hierarchy recursively
         "views/**/*",  # exclude all files in a folder hierarchy recursively
+        "__init__.py"
     ]
 }
 
@@ -65,3 +66,4 @@
 # 19.0.0.6 - Fix Warnings
 # 19.0.0.7 - Agrega valores por default en config
 # 19.0.0.8 - Actualiza formato respuestas, Fix en deliver order
+# 19.0.1.0 - Actualiza flujo webhooks precio
