@@ -35,8 +35,9 @@ class SaleOrder(models.Model):
             return results.error_result(code='order_id_required',
                                         description='order_id is required')
         order = self.search([('id', '=', order_id)])
-        
-        config = self.env['madkting.config'].get_config()
+
+        company_id = order.company_id.id
+        config = self.env['madkting.config'].get_config(company_id)
 
         if config and config.validate_cafs and config.cafs_document_type_id:
             
